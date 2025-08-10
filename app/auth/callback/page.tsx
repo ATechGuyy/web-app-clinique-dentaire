@@ -17,8 +17,8 @@ export default function AuthCallbackPage() {
         const { supabase } = await import('@/lib/supabase')
         
         // Debug: Log all search parameters
-        const params = {}
-        searchParams.forEach((value, key) => {
+        const params: Record<string, string> = {}
+        searchParams.forEach((value: string, key: string) => {
           params[key] = value
         })
         console.log('Auth callback search params:', params)
