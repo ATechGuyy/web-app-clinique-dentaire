@@ -76,10 +76,8 @@ export default function SignUpPage() {
         setError(error.message)
       } else if (data.user) {
         setSuccess(true)
-        // Redirect to dashboard after a short delay
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 2000)
+        // Don't redirect immediately - wait for email confirmation
+        // The user will be redirected after clicking the confirmation email
       }
     } catch (err) {
       setError('Une erreur est survenue lors de la création du compte')
@@ -126,9 +124,11 @@ export default function SignUpPage() {
             Compte créé avec succès !
           </h2>
           <p className="text-gray-600 mb-6">
-            Vérifiez votre email pour confirmer votre compte, puis vous serez redirigé vers le tableau de bord.
+            Vérifiez votre email pour confirmer votre compte. Cliquez sur le lien de confirmation dans l'email que nous venons de vous envoyer.
           </p>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="text-sm text-gray-500">
+            Vérifiez votre boîte de réception et vos spams
+          </div>
         </motion.div>
       </div>
     )

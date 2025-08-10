@@ -5,43 +5,31 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Stethoscope, CheckCircle, XCircle } from 'lucide-react'
 
-export default function AuthCallbackPage() {
+export default function EmailConfirmPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const handleCallback = async () => {
+    const handleEmailConfirmation = async () => {
       try {
         const { supabase } = await import('@/lib/supabase')
         
-        // Debug: Log all search parameters
-        const params = {}
-        searchParams.forEach((value, key) => {
-          params[key] = value
-        })
-        console.log('Auth callback search params:', params)
-        
-        // Check for email confirmation parameters
+        // Get the tokens from URL parameters
         const accessToken = searchParams.get('access_token')
         const refreshToken = searchParams.get('refresh_token')
         const type = searchParams.get('type')
-        const error = searchParams.get('error')
-        const errorDescription = searchParams.get('error_description')
         
-        // Handle OAuth errors
-        if (error) {
-          console.error('OAuth error:', error, errorDescription)
+        if (!accessToken || !refreshToken) {
           setStatus('error')
-          setMessage(`Erreur OAuth: ${errorDescription || error}`)
+          setMessage('Lien de confirmation invalide')
           setTimeout(() => router.push('/sign-in'), 3000)
           return
         }
-        
-        if (type === 'signup' && accessToken && refreshToken) {
-          // Handle email confirmation
-          console.log('Processing email confirmation...')
+
+        if (type === 'signup') {
+          // Set the session with the tokens from email confirmation
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -61,9 +49,8 @@ export default function AuthCallbackPage() {
             setMessage('Impossible de créer la session')
             setTimeout(() => router.push('/sign-in'), 3000)
           }
-        } else if (type === 'recovery' && accessToken && refreshToken) {
+        } else if (type === 'recovery') {
           // Handle password recovery
-          console.log('Processing password recovery...')
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -82,57 +69,20 @@ export default function AuthCallbackPage() {
             setMessage('Impossible de créer la session')
             setTimeout(() => router.push('/sign-in'), 3000)
           }
-        } else if (accessToken && refreshToken) {
-          // Handle any other token-based authentication
-          console.log('Processing token-based authentication...')
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          })
-          
-          if (error) {
-            console.error('Session error:', error)
-            setStatus('error')
-            setMessage('Erreur lors de l\'authentification')
-            setTimeout(() => router.push('/sign-in'), 3000)
-          } else if (data.session) {
-            setStatus('success')
-            setMessage('Authentification réussie ! Redirection...')
-            setTimeout(() => router.push('/dashboard'), 2000)
-          } else {
-            setStatus('error')
-            setMessage('Impossible de créer la session')
-            setTimeout(() => router.push('/sign-in'), 3000)
-          }
         } else {
-          // Handle OAuth callback (Google, etc.)
-          console.log('Processing OAuth callback...')
-          const { data, error } = await supabase.auth.getSession()
-          
-          if (error) {
-            console.error('OAuth error:', error)
-            setStatus('error')
-            setMessage('Erreur lors de l\'authentification OAuth')
-            setTimeout(() => router.push('/sign-in'), 3000)
-          } else if (data.session) {
-            setStatus('success')
-            setMessage('Connexion OAuth réussie ! Redirection...')
-            setTimeout(() => router.push('/dashboard'), 2000)
-          } else {
-            setStatus('error')
-            setMessage('Aucune session OAuth trouvée')
-            setTimeout(() => router.push('/sign-in'), 3000)
-          }
+          setStatus('error')
+          setMessage('Type de confirmation non reconnu')
+          setTimeout(() => router.push('/sign-in'), 3000)
         }
       } catch (err) {
-        console.error('Callback error:', err)
+        console.error('Email confirmation error:', err)
         setStatus('error')
-        setMessage('Une erreur est survenue')
+        setMessage('Une erreur est survenue lors de la confirmation')
         setTimeout(() => router.push('/sign-in'), 3000)
       }
     }
 
-    handleCallback()
+    handleEmailConfirmation()
   }, [router, searchParams])
 
   const getStatusIcon = () => {
@@ -173,9 +123,9 @@ export default function AuthCallbackPage() {
         </div>
         
         <h2 className={`text-2xl font-bold mb-4 ${getStatusColor()}`}>
-          {status === 'loading' && 'Authentification en cours...'}
-          {status === 'success' && 'Connexion réussie !'}
-          {status === 'error' && 'Erreur d\'authentification'}
+          {status === 'loading' && 'Confirmation en cours...'}
+          {status === 'success' && 'Email confirmé !'}
+          {status === 'error' && 'Erreur de confirmation'}
         </h2>
         
         <p className="text-gray-600 mb-6">
@@ -184,7 +134,7 @@ export default function AuthCallbackPage() {
         
         {status === 'loading' && (
           <div className="text-sm text-gray-500">
-            Veuillez patienter pendant que nous finalisons votre connexion...
+            Veuillez patienter pendant que nous confirmons votre email...
           </div>
         )}
         
@@ -200,4 +150,3 @@ export default function AuthCallbackPage() {
     </div>
   )
 }
-
